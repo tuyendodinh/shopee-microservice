@@ -19,6 +19,11 @@ Ngoài ra, hệ thống còn áp dụng **Event-Driven Architecture (EDA)** kế
 | PostgreSQL | Lưu trữ dữ liệu của từng service |
 | gRPC | Giao tiếp đồng bộ giữa các service |
 | EDA (Kafka/RabbitMQ) | Giao tiếp bất đồng bộ thông qua event |
+| Replica | Bản sao của database chính |
+| Sharding | chia nhỏ dữ liệu thành các database khác |
+| IAM (JWT RS256) | Xác thực và phân quyền người dùng |
+| MinIO/AWS S3 | Lưu trữ các tệp dung lượng lớn như hình ảnh sản phẩm, ảnh đại diện người dùng và tài liệu đính kèm |
+| Cloudflare | dịch vụ bao gồm: CDN, Cache, WAF, DDoS Protection, DNS | 
 
 # Kiến trúc tổng quan hệ thống Shopee
 
@@ -27,43 +32,67 @@ Hệ thống Shopee được xây dựng theo kiến trúc **Microservice**, tro
 ## Kiến trúc tổng thể
 
 ```text
-                           +----------------+
-                           |    Frontend    |
-                           +--------+-------+
-                                    |
-                                    v
-                           +----------------+
-                           |  API Gateway   |
-                           +--------+-------+
-                                    |
-        ----------------------------------------------------------------
-        |                |                |                |            |
-        v                v                v                v            v
+                                        +------------------+
+                                        |     User App     |
+                                        +---------+--------+
+                                                  |
+                                                  v
 
-+---------------+ +---------------+ +---------------+ +---------------+ +---------------+
-| User Service  | | Product       | | Order Service | | Payment       | | Shipping      |
-| Minimal API   | | Service       | | Minimal API   | | Service       | | Service       |
-| PostgreSQL    | | Minimal API   | | PostgreSQL    | | Minimal API   | | Minimal API   |
-+-------+-------+ | PostgreSQL    | +-------+-------+ | PostgreSQL    | | PostgreSQL    |
-        |         +-------+-------+         |         +-------+-------+ +-------+-------+
-        |                 ^                 |                 ^
-        |                 |                 |                 |
-        +-----------------+------ gRPC -----+-----------------+
-                          |
-                          v
+                                        +------------------+
+                                        |    Cloudflare    |
+                                        | CDN + WAF + DNS |
+                                        +---------+--------+
+                                                  |
+                                                  v
 
-                    +------------+
-                    |   Kafka    |
-                    +------------+
-                          |
-          -----------------------------------------
-          |                    |                  |
-          v                    v                  v
+                                        +------------------+
+                                        |   API Gateway    |
+                                        +---------+--------+
+                                                  |
+        -----------------------------------------------------------------------------------
+        |                  |                  |                  |               |         |
+        v                  v                  v                  v               v         v
 
-+----------------+  +----------------+  +----------------+
-| Notification   |  | Analytics      |  | Loyalty Point  |
-| Service        |  | Service        |  | Service        |
-+----------------+  +----------------+  +----------------+
++---------------+  +---------------+  +---------------+  +---------------+ +-----------+ +---------------+
+|  IAM Service  |  | User Service  |  | Product       |  | Order Service | | Cart      | | Payment       |
+| Minimal API   |  | Minimal API   |  | Service       |  | Minimal API   | | Service   | | Service       |
++-------+-------+  +-------+-------+  | Minimal API   |  +-------+-------+ +-----+-----+ +-------+-------+
+        |                  |          +-------+-------+          |               |               |
+        |                  |                  |                  |               |               |
+        -------------------------------------------------------------------------------------------
+                                                  |
+                                                  |
+                                              gRPC Calls
+                                                  |
+                                                  v
+
+                                 Product <-----> Order <-----> User
+                                        \            |
+                                         \           |
+                                          \          |
+                                           \         |
+                                            v        v
+
+                                      Payment Service
+
+                                                  |
+                                                  |
+                                            Publish Event
+                                                  |
+                                                  v
+
+                                            +-----------+
+                                            |   Kafka   |
+                                            +-----+-----+
+                                                  |
+        -----------------------------------------------------------------------------------
+        |                    |                     |                     |                |
+        v                    v                     v                     v                v
+
++---------------+ +----------------+ +----------------+ +----------------+ +----------------+
+| Notification  | | Shipping       | | Analytics      | | Loyalty Point  | | Recommendation |
+| Service       | | Service        | | Service        | | Service         | | Service        |
++---------------+ +----------------+ +----------------+ +----------------+ +----------------+
 ```
 
 ## Thành phần chính
@@ -152,7 +181,13 @@ Khi một đơn hàng được tạo thành công, Order Service phát sinh sự
 
 ## Database
 
-Mỗi service sở hữu cơ sở dữ liệu PostgreSQL riêng.
+Mỗi service sử dụng PostgreSQL với mô hình Primary-Replica.
+
+Primary Database chịu trách nhiệm xử lý các thao tác ghi dữ liệu (INSERT, UPDATE, DELETE), trong khi Replica Database phục vụ các truy vấn đọc dữ liệu (SELECT).
+
+Dữ liệu từ Primary được đồng bộ sang Replica thông qua cơ chế Replication của PostgreSQL.
+
+Mô hình này giúp giảm tải cho cơ sở dữ liệu chính, tăng khả năng mở rộng và cải thiện hiệu năng đọc dữ liệu của hệ thống thương mại điện tử quy mô lớn như Shopee.
 
 ```text
 User Service
@@ -160,10 +195,12 @@ User Service
     v
 PostgreSQL
 
-Product Service
-    |
-    v
-PostgreSQL
+     Product Service
+    |               |
+    v               v
+PostgreSQL       PostgreSQL
+Primary          Replica      
+(write)          (Read)
 
 Order Service
     |
@@ -177,3 +214,89 @@ PostgreSQL
 ```
 
 Nguyên tắc quan trọng của Microservice là một service không được truy cập trực tiếp cơ sở dữ liệu của service khác. Thay vào đó, việc trao đổi dữ liệu phải được thực hiện thông qua gRPC hoặc Event.
+### sharding
+chia nhỏ dữ liệu thành nhiều database khác nhau
+
+Ví dụ: ban đầu bảng Orders có 10 tỷ record, sau khi sharding
+```text
+                Order Service
+
+                       |
+      ----------------------------------
+      |                |               |
+      v                v               v
+
+    Shard 1         Shard 2         Shard 3
+      |                |               |
+   -------          -------         -------
+   |     |          |     |         |     |
+Primary Replica  Primary Replica Primary Replica
+```
+
+### IAM - Identity and accept management
+=> phân quyền người dùng
+### SHA-256
+=> mã hóa mật khẩu
+### RS256 
+Là phần đi cùng JWT 
+
+Sau khi login IAM Service cấp JWT token => Product Service kiểm tra token có giả hay không => việc của RS256
+
+```text
+          RS256
+            |
+            v
+      -----------------                 User -> IAM service -> Tạo JWT và Ký (private key) -> frontend -> service khác -> kt(public key) -> accept 
+      |               |
+      v               v
+private key        public key
+IAM service        mọi service
+      |               |
+      v               v
+  Ký token         Xác minh token
+```
+
+### MinIO và AWS S3
+Hệ thống sử dụng MinIO (tương thích AWS S3) để lưu trữ các tệp dung lượng lớn như hình ảnh sản phẩm, ảnh đại diện người dùng và tài liệu đính kèm.
+
+Thay vì lưu trực tiếp file trong PostgreSQL, hệ thống chỉ lưu đường dẫn (URL) của file trong cơ sở dữ liệu. Điều này giúp giảm kích thước database, tăng hiệu năng truy vấn và tối ưu khả năng mở rộng.
+
+Trong môi trường phát triển, MinIO được sử dụng như một giải pháp thay thế AWS S3 nhờ khả năng triển khai nội bộ và tương thích hoàn toàn với API của S3.
+```text
+Seller
+   |
+   v
+Product Service
+   |
+   v
+MinIO / S3
+   |
+   v
+Image URL
+   |
+   v
+PostgreSQL
+```
+### Cache
+Cache nơi lưu trữ tạm dữ liệu đã được truy cập trước đó
+### CDN - Content delivery network (Mạng lưới máy chủ phân tán toàn cầu)
+Ảnh nằm ở Singapore -> người Việt tải ảnh 
+```text
+Singapore
+     |
+     v
+CDN Node VN
+
+Singapore
+     |
+     v
+CDN Node Thailand
+
+Singapore
+     |
+     v
+CDN Node Indonesia
+```
+### Cloudflare
+Là một dịch vụ bao gồm: CDN, Cache, WAF, DDoS Protection, DNS
+
