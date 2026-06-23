@@ -207,7 +207,8 @@ Mô hình này giúp giảm tải cho cơ sở dữ liệu chính, tăng khả n
 ```
 
 Nguyên tắc quan trọng của Microservice là một service không được truy cập trực tiếp cơ sở dữ liệu của service khác. Thay vào đó, việc trao đổi dữ liệu phải được thực hiện thông qua gRPC hoặc Event.
-### sharding
+
+#### sharding
 chia nhỏ dữ liệu thành nhiều database khác nhau
 
 Ví dụ: ban đầu bảng Orders có 10 tỷ record, sau khi sharding
@@ -226,11 +227,13 @@ Ví dụ: ban đầu bảng Orders có 10 tỷ record, sau khi sharding
 Primary Replica  Primary Replica  Primary Replica
 ```
 
-### IAM - Identity and accept management
+### Authentication & Session Security
+
+#### IAM - Identity and accept management
 => phân quyền người dùng
-### SHA-256
+#### SHA-256
 => mã hóa mật khẩu
-### RS256 
+#### RS256 
 Là phần đi cùng JWT 
 
 Sau khi login IAM Service cấp JWT token => Product Service kiểm tra token có giả hay không => việc của RS256
@@ -248,6 +251,16 @@ IAM service        mọi service
       v               v
   Ký token         Xác minh token
 ```
+#### HttpOnly cookie
+Nếu không có HttpOnly cookie, JWT token sau khi đăng nhập -> lưu LocalStorage -> JS đọc được -> dễ bị đánh cắp
+
+HttpOnly cookie -> Browser tự lưu token -> JS không đọc được, không sửa được -> giúp chống token theft
+
+Cookie được cấu hình với các thuộc tính:
+
+- HttpOnly: Ngăn JavaScript truy cập token.
+- Secure: Chỉ gửi cookie qua HTTPS.
+- SameSite=Strict: Hạn chế tấn công CSRF.
 
 ### MinIO và AWS S3
 Hệ thống sử dụng MinIO (tương thích AWS S3) để lưu trữ các tệp dung lượng lớn như hình ảnh sản phẩm, ảnh đại diện người dùng và tài liệu đính kèm.
@@ -293,22 +306,5 @@ CDN Node Indonesia
 ### Cloudflare
 Là một dịch vụ bao gồm: CDN, Cache, WAF, DDoS Protection, DNS
 
-### HttpOnly cookie
-Nếu không có HttpOnly cookie, JWT token sau khi đăng nhập -> lưu LocalStorage -> JS đọc được -> dễ bị đánh cắp
 
-HttpOnly cookie -> Browser tự lưu token -> JS không đọc được, không sửa được -> giúp chống token theft
-
-## Authentication & Session Security
-
-Hệ thống sử dụng JWT được ký bằng thuật toán RS256 để xác thực người dùng.
-
-Sau khi đăng nhập thành công, JWT được lưu dưới dạng HttpOnly Cookie thay vì LocalStorage nhằm giảm nguy cơ đánh cắp token thông qua các cuộc tấn công XSS.
-
-Cookie được cấu hình với các thuộc tính:
-
-- HttpOnly: Ngăn JavaScript truy cập token.
-- Secure: Chỉ gửi cookie qua HTTPS.
-- SameSite=Strict: Hạn chế tấn công CSRF.
-
-API Gateway và các service sử dụng Public Key để xác thực JWT trước khi xử lý yêu cầu.
 
