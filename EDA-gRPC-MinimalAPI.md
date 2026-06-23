@@ -306,7 +306,37 @@ Singapore
 CDN Node Indonesia
 ```
 ### Cloudflare
+
 Là một dịch vụ bao gồm: CDN, Cache, WAF, DDoS Protection, DNS
+
+### Rate Limit & Threshold & Quota
+
+Rate limit: giới hạn số lương request trong một khoảng thời gian
+
+```text
+        Rate Limit: 100 request/phút
+                    |
+                    v
+           ------------------
+           |                |
+           v                v
+       80 request       200 request
+           |                |
+           v                v
+       cho phép            chặn
+
+Ngăn: Bot, Spam, DDoS nhẹ, Brute Force
+```
+
+Threshold: ngưỡng cảnh báo
+
+```text
+        Threshold: 800 request/phút -> vượt 800 -> cảnh báo
+```
+
+Quota: tổng lượng tài nguyên được phép dùng
+
+
 
 
 
