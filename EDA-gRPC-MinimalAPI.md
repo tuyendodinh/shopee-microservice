@@ -227,6 +227,30 @@ Ví dụ: ban đầu bảng Orders có 10 tỷ record, sau khi sharding
 Primary Replica  Primary Replica  Primary Replica
 ```
 
+#### MinIO và AWS S3
+Hệ thống sử dụng MinIO (tương thích AWS S3) để lưu trữ các tệp dung lượng lớn như hình ảnh sản phẩm, ảnh đại diện người dùng và tài liệu đính kèm.
+
+Thay vì lưu trực tiếp file trong PostgreSQL, hệ thống chỉ lưu đường dẫn (URL) của file trong cơ sở dữ liệu. Điều này giúp giảm kích thước database, tăng hiệu năng truy vấn và tối ưu khả năng mở rộng.
+
+Trong môi trường phát triển, MinIO được sử dụng như một giải pháp thay thế AWS S3 nhờ khả năng triển khai nội bộ và tương thích hoàn toàn với API của S3.
+```text
+Seller
+   |
+   v
+Product Service
+   |
+   v
+MinIO / S3
+   |
+   v
+Image URL
+   |
+   v
+PostgreSQL
+```
+#### Cache
+Cache nơi lưu trữ tạm dữ liệu đã được truy cập trước đó
+
 ### Authentication & Session Security
 
 #### IAM - Identity and accept management
@@ -262,29 +286,7 @@ Cookie được cấu hình với các thuộc tính:
 - Secure: Chỉ gửi cookie qua HTTPS.
 - SameSite=Strict: Hạn chế tấn công CSRF.
 
-### MinIO và AWS S3
-Hệ thống sử dụng MinIO (tương thích AWS S3) để lưu trữ các tệp dung lượng lớn như hình ảnh sản phẩm, ảnh đại diện người dùng và tài liệu đính kèm.
 
-Thay vì lưu trực tiếp file trong PostgreSQL, hệ thống chỉ lưu đường dẫn (URL) của file trong cơ sở dữ liệu. Điều này giúp giảm kích thước database, tăng hiệu năng truy vấn và tối ưu khả năng mở rộng.
-
-Trong môi trường phát triển, MinIO được sử dụng như một giải pháp thay thế AWS S3 nhờ khả năng triển khai nội bộ và tương thích hoàn toàn với API của S3.
-```text
-Seller
-   |
-   v
-Product Service
-   |
-   v
-MinIO / S3
-   |
-   v
-Image URL
-   |
-   v
-PostgreSQL
-```
-### Cache
-Cache nơi lưu trữ tạm dữ liệu đã được truy cập trước đó
 ### CDN - Content delivery network (Mạng lưới máy chủ phân tán toàn cầu)
 Ảnh nằm ở Singapore -> người Việt tải ảnh 
 ```text
