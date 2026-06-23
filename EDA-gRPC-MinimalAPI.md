@@ -185,7 +185,7 @@ Khi một đơn hàng được tạo thành công, Order Service phát sinh sự
 ---
 
 ### Database
-
+#### Replica
 Mỗi service sử dụng PostgreSQL với mô hình Primary-Replica.
 
 Primary Database chịu trách nhiệm xử lý các thao tác ghi dữ liệu (INSERT, UPDATE, DELETE), trong khi Replica Database phục vụ các truy vấn đọc dữ liệu (SELECT).
