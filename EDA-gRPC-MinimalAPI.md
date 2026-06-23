@@ -123,6 +123,14 @@ Nhận các sự kiện từ Kafka để gửi email, SMS hoặc thông báo tro
 
 Thu thập dữ liệu sự kiện từ hệ thống nhằm phục vụ báo cáo và phân tích kinh doanh.
 
+### Loyalty Point Service
+
+Quản lý điểm thưởng, điểm tích lũy, xu shopee, voucher thưởng.
+
+### Recommendation Service
+
+gợi ý sản phẩm tương tự, liên quan.
+
 ---
 
 ## Mô tả các công nghệ sử dụng
@@ -161,7 +169,7 @@ Order Service
 OrderCreated Event
       |
       v
-Kafka
+    Kafka
       |
 -------------------------
 |           |           |
@@ -186,27 +194,15 @@ Dữ liệu từ Primary được đồng bộ sang Replica thông qua cơ chế
 Mô hình này giúp giảm tải cho cơ sở dữ liệu chính, tăng khả năng mở rộng và cải thiện hiệu năng đọc dữ liệu của hệ thống thương mại điện tử quy mô lớn như Shopee.
 
 ```text
-User Service
-    |
-    v
-PostgreSQL
+                   Product Service
 
-     Product Service
-    |               |
-    v               v
-PostgreSQL       PostgreSQL
-Primary          Replica      
-(write)          (Read)
+                          |
+        ------------------------------------
+        |                                  |
+        v                                  v
 
-Order Service
-    |
-    v
-PostgreSQL
-
-Payment Service
-    |
-    v
-PostgreSQL
+ PostgreSQL Primary              PostgreSQL Replica
+      Write                            Read
 ```
 
 Nguyên tắc quan trọng của Microservice là một service không được truy cập trực tiếp cơ sở dữ liệu của service khác. Thay vào đó, việc trao đổi dữ liệu phải được thực hiện thông qua gRPC hoặc Event.
@@ -226,7 +222,7 @@ Ví dụ: ban đầu bảng Orders có 10 tỷ record, sau khi sharding
       |                |               |
    -------          -------         -------
    |     |          |     |         |     |
-Primary Replica  Primary Replica Primary Replica
+Primary Replica  Primary Replica  Primary Replica
 ```
 
 ### IAM - Identity and accept management
