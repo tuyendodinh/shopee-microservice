@@ -2,20 +2,12 @@
 
 Hệ thống Shopee được thiết kế theo kiến trúc **Microservice**, trong đó toàn bộ hệ thống được chia thành nhiều service độc lập như User Service, Product Service, Order Service, Payment Service và Shipping Service. Mỗi service đảm nhiệm một nhóm chức năng riêng và có thể được triển khai, mở rộng hoặc bảo trì độc lập với các service khác.
 
-Để xây dựng các API cho từng service, hệ thống sử dụng **ASP.NET Core Minimal API**. Minimal API giúp giảm lượng mã nguồn cần viết, đơn giản hóa việc xây dựng endpoint và phù hợp với các microservice có phạm vi chức năng nhỏ.
-
-Mỗi service sở hữu một cơ sở dữ liệu riêng được xây dựng trên **PostgreSQL**. Việc tách biệt cơ sở dữ liệu giúp các service độc lập với nhau, hạn chế phụ thuộc trực tiếp vào dữ liệu của service khác và tăng khả năng mở rộng của hệ thống.
-
-Đối với các nghiệp vụ cần phản hồi ngay lập tức, chẳng hạn như kiểm tra thông tin người dùng, xác thực đơn hàng hoặc kiểm tra tồn kho sản phẩm, các service giao tiếp với nhau thông qua **gRPC**. Đây là cơ chế giao tiếp đồng bộ (synchronous communication) có hiệu năng cao, sử dụng HTTP/2 và Protocol Buffers để giảm kích thước dữ liệu truyền tải và tăng tốc độ xử lý.
-
-Ngoài ra, hệ thống còn áp dụng **Event-Driven Architecture (EDA)** kết hợp với Kafka hoặc RabbitMQ để xử lý các nghiệp vụ bất đồng bộ. Khi một sự kiện xảy ra, ví dụ đơn hàng được tạo thành công, Order Service sẽ phát sinh sự kiện `OrderCreated`. Các service khác như Payment Service, Notification Service hoặc Analytics Service có thể lắng nghe và xử lý sự kiện này mà không cần giao tiếp trực tiếp với Order Service. Điều này giúp giảm sự phụ thuộc giữa các service, tăng khả năng mở rộng và nâng cao độ ổn định của hệ thống.
-
 ### Tóm tắt vai trò các công nghệ
 
 | Công nghệ | Vai trò |
 |-----------|----------|
 | Microservice | Chia hệ thống thành các service độc lập |
-| Minimal API | Xây dựng API cho từng service |
+| Minimal API | Xây dựng API cho từng service, giảm lượng mã nguồn, đơn giản hóa xây dựng các endpoint |
 | PostgreSQL | Lưu trữ dữ liệu của từng service |
 | gRPC | Giao tiếp đồng bộ giữa các service |
 | EDA (Kafka/RabbitMQ) | Giao tiếp bất đồng bộ thông qua event |
@@ -23,6 +15,8 @@ Ngoài ra, hệ thống còn áp dụng **Event-Driven Architecture (EDA)** kế
 | Sharding | chia nhỏ dữ liệu thành các database khác |
 | IAM (JWT RS256) | Xác thực và phân quyền người dùng |
 | MinIO/AWS S3 | Lưu trữ các tệp dung lượng lớn như hình ảnh sản phẩm, ảnh đại diện người dùng và tài liệu đính kèm |
+| Cache | Cache nơi lưu trữ tạm dữ liệu đã được truy cập trước đó |
+| CDN | mạng lưới máy chủ phân tán toàn cầu |
 | Cloudflare | dịch vụ bao gồm: CDN, Cache, WAF, DDoS Protection, DNS | 
 
 # Kiến trúc tổng quan hệ thống Shopee
@@ -73,7 +67,7 @@ Hệ thống Shopee được xây dựng theo kiến trúc **Microservice**, tro
                                            \         |
                                             v        v
 
-                                      Payment Service
+                                           Payment Service
 
                                                   |
                                                   |
@@ -131,9 +125,11 @@ Thu thập dữ liệu sự kiện từ hệ thống nhằm phục vụ báo cá
 
 ---
 
-## Giao tiếp giữa các service
+## Mô tả các công nghệ sử dụng
 
-### Giao tiếp đồng bộ (gRPC)
+### Giao tiếp giữa các service
+
+#### Giao tiếp đồng bộ (gRPC)
 
 Các nghiệp vụ yêu cầu phản hồi ngay lập tức sử dụng gRPC.
 
@@ -152,7 +148,7 @@ Order Service
 Product Service
 ```
 
-### Giao tiếp bất đồng bộ (EDA)
+#### Giao tiếp bất đồng bộ (EDA)
 
 Các nghiệp vụ không yêu cầu phản hồi ngay sử dụng Kafka.
 
@@ -179,7 +175,7 @@ Khi một đơn hàng được tạo thành công, Order Service phát sinh sự
 
 ---
 
-## Database
+### Database
 
 Mỗi service sử dụng PostgreSQL với mô hình Primary-Replica.
 
