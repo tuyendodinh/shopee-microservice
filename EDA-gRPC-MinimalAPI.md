@@ -83,10 +83,10 @@ Hệ thống Shopee được xây dựng theo kiến trúc **Microservice**, tro
         |                    |                     |                     |                |
         v                    v                     v                     v                v
 
-+---------------+ +----------------+ +----------------+ +----------------+ +----------------+
-| Notification  | | Shipping       | | Analytics      | | Loyalty Point  | | Recommendation |
-| Service       | | Service        | | Service        | | Service         | | Service       |
-+---------------+ +----------------+ +----------------+ +----------------+ +----------------+
+    +---------------+ +----------------+ +----------------+ +----------------+ +----------------+
+    | Notification  | | Shipping       | | Analytics      | | Loyalty Point  | | Recommendation |
+    | Service       | | Service        | | Service        | | Service        | | Service        |
+    +---------------+ +----------------+ +----------------+ +----------------+ +----------------+
 ```
 
 ## Thành phần chính
