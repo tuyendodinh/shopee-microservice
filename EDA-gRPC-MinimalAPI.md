@@ -263,17 +263,18 @@ Là phần đi cùng JWT
 Sau khi login IAM Service cấp JWT token => Product Service kiểm tra token có giả hay không => việc của RS256
 
 ```text
-          RS256
-            |
-            v
-      -----------------                 
-      |               |                                                                                          
-      v               v
-private key        public key
-IAM service        mọi service
-      |               |
-      v               v
-  Ký token         Xác minh token
+                                                    RS256
+                                                      |
+                                                      v
+                                                -----------------                 
+                                                |               |                                                                                          
+                                                v               v
+                                          private key        public key
+                                          IAM service        mọi service
+                                                |               |
+                                                v               v
+                                            Ký token         Xác minh token
+
 
 User -> IAM service -> Tạo JWT và Ký (private key) -> frontend -> service khác -> kt(public key) -> accept 
 ```
