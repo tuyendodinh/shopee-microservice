@@ -18,6 +18,7 @@ Hệ thống Shopee được thiết kế theo kiến trúc **Microservice**, tr
 | Cache | Cache nơi lưu trữ tạm dữ liệu đã được truy cập trước đó |
 | CDN | mạng lưới máy chủ phân tán toàn cầu |
 | Cloudflare | dịch vụ bao gồm: CDN, Cache, WAF, DDoS Protection, DNS | 
+| HttpOnly | Chỉ HTTP Request mới được sử dụng cookie, cookie lưu token|
 
 # Kiến trúc tổng quan hệ thống Shopee
 
@@ -291,4 +292,23 @@ CDN Node Indonesia
 ```
 ### Cloudflare
 Là một dịch vụ bao gồm: CDN, Cache, WAF, DDoS Protection, DNS
+
+### HttpOnly cookie
+Nếu không có HttpOnly cookie, JWT token sau khi đăng nhập -> lưu LocalStorage -> JS đọc được -> dễ bị đánh cắp
+
+HttpOnly cookie -> Browser tự lưu token -> JS không đọc được, không sửa được -> giúp chống token theft
+
+## Authentication & Session Security
+
+Hệ thống sử dụng JWT được ký bằng thuật toán RS256 để xác thực người dùng.
+
+Sau khi đăng nhập thành công, JWT được lưu dưới dạng HttpOnly Cookie thay vì LocalStorage nhằm giảm nguy cơ đánh cắp token thông qua các cuộc tấn công XSS.
+
+Cookie được cấu hình với các thuộc tính:
+
+- HttpOnly: Ngăn JavaScript truy cập token.
+- Secure: Chỉ gửi cookie qua HTTPS.
+- SameSite=Strict: Hạn chế tấn công CSRF.
+
+API Gateway và các service sử dụng Public Key để xác thực JWT trước khi xử lý yêu cầu.
 
