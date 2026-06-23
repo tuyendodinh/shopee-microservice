@@ -266,14 +266,16 @@ Sau khi login IAM Service cấp JWT token => Product Service kiểm tra token c�
           RS256
             |
             v
-      -----------------                 User -> IAM service -> Tạo JWT và Ký (private key) -> frontend -> service khác -> kt(public key) -> accept 
-      |               |
+      -----------------                 
+      |               |                                                                                          
       v               v
 private key        public key
 IAM service        mọi service
       |               |
       v               v
   Ký token         Xác minh token
+
+User -> IAM service -> Tạo JWT và Ký (private key) -> frontend -> service khác -> kt(public key) -> accept 
 ```
 #### HttpOnly cookie
 Nếu không có HttpOnly cookie, JWT token sau khi đăng nhập -> lưu LocalStorage -> JS đọc được -> dễ bị đánh cắp
