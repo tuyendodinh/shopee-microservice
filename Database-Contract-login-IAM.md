@@ -78,3 +78,23 @@ users
 | updated_at | TIMESTAMP | No | Updated time |
 
 ---
+
+### Constraints
+
+```sql
+PRIMARY KEY (id)
+
+UNIQUE(email)
+```
+
+---
+
+### Status Values
+
+```text
+ACTIVE
+LOCKED
+SUSPENDED
+```
+
+---
