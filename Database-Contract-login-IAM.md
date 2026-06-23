@@ -98,3 +98,31 @@ SUSPENDED
 ```
 
 ---
+
+# 4. Roles
+
+Lưu danh sách vai trò.
+
+## Table
+
+roles
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|----------|----------|----------|
+| id | UUID | No | Primary Key |
+| name | VARCHAR(100) | No | Role name |
+| description | TEXT | Yes | Description |
+
+---
+
+### Sample Data
+
+```text
+ADMIN
+CUSTOMER
+SELLER
+```
+
+---
