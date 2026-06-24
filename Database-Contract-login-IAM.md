@@ -126,3 +126,67 @@ SELLER
 ```
 
 ---
+
+# 5. Permissions
+
+Lưu danh sách quyền.
+
+## Table
+
+permissions
+
+### Columns
+
+| Column | Type | Nullable | Description |
+|----------|----------|----------|----------|
+| id | UUID | No | Primary Key |
+| name | VARCHAR(100) | No | Permission name |
+| description | TEXT | Yes | Description |
+
+---
+
+### Sample Data
+
+```text
+USER_READ
+USER_WRITE
+
+PRODUCT_READ
+PRODUCT_WRITE
+
+ORDER_READ
+ORDER_WRITE
+```
+
+---
+
+# 6. User Roles
+
+Quan hệ N-N giữa User và Role.
+
+## Table
+
+user_roles
+
+### Columns
+
+| Column | Type |
+|----------|----------|
+| user_id | UUID |
+| role_id | UUID |
+
+---
+
+### Constraints
+
+```sql
+PRIMARY KEY (user_id, role_id)
+
+FOREIGN KEY (user_id)
+REFERENCES users(id)
+
+FOREIGN KEY (role_id)
+REFERENCES roles(id)
+```
+
+---
